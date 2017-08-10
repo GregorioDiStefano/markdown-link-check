@@ -18,6 +18,8 @@ var statusLabels = {
 var error = false;
 var opts = {};
 var stream = process.stdin; // read from stdin unless a filename is given
+var filename = "";
+
 program.option('-p, --progress', 'show progress bar').arguments('[filenameOrUrl]').action(function (filenameOrUrl) {
     if (/https?:/.test(filenameOrUrl)) {
         stream = request.get(filenameOrUrl);
@@ -31,6 +33,7 @@ program.option('-p, --progress', 'show progress bar').arguments('[filenameOrUrl]
             opts.baseUrl = url.format(parsed);
         } catch (err) { /* ignore error */ }
     } else {
+        filename = filenameOrUrl
         opts.baseUrl = 'file://' + path.dirname(path.resolve(filenameOrUrl));
         stream = fs.createReadStream(filenameOrUrl);
     }
@@ -42,7 +45,7 @@ var markdown = ''; // collect the markdown data, then process it
 stream.on('data', function (chunk) {
     markdown += chunk.toString();
 }).on('end', function () {
-    markdownLinkCheck(markdown, opts, function (err, results) {
+    markdownLinkCheck(markdown, filename, opts, function (err, results) {
         results.forEach(function (result) {
             if(result.status === 'dead') {
                 error = true;
